@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Secret Word Link Finder</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Georgia', serif;
+      background-image: url('https://static.vecteezy.com/system/resources/previews/013/467/392/original/old-pirate-treasure-map-parchment-paper-vector.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      color: #2c1d00;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.12);
+      z-index: -1;
+    }
+
+    .overlay {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      padding: 50px 20px;
+      box-sizing: border-box;
+    }
+
+    .title-box {
+      background-color: #f4e1c1;
+      padding: 20px 30px;
+      border: 2px solid #c4a35a;
+      border-radius: 10px;
+      box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+      margin-bottom: 30px;
+      text-align: center;
+      max-width: 100%;
+    }
+
+    h1 {
+      font-size: 3em;
+      margin: 0;
+      text-shadow: 1px 1px #c4a35a;
+    }
+
+    .input-button-container {
+      display: flex;
+      align-items: center;
+      max-width: 400px;
+      width: 100%;
+      gap: 10px;
+      box-sizing: border-box;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      font-size: 18px;
+      width: 100%;
+      border: 2px solid black;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 18px;
+      background-color: #d4a76a;
+      border: 2px solid black;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      user-select: none;
+    }
+
+    button:hover {
+      background-color: #b38545;
+    }
+
+    #linkOutput {
+      margin-top: 30px;
+      font-size: 20px;
+      text-align: center;
+      max-width: 600px;
+      width: 100%;
+      background-color: #f4e1c1;
+      border: 2px solid #c4a35a;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 2px 2px 8px rgba(0,0,0,0.15);
+      box-sizing: border-box;
+      margin-left: auto;
+      margin-right: auto;
+      word-wrap: break-word;
+    }
+
+    #hintOutput {
+      margin-top: 15px;
+      font-size: 18px;
+      color: #442800;
+      background-color: #e9d7a1;
+      border: 2px solid #a18746;
+      border-radius: 8px;
+      padding: 12px 16px;
+      max-width: 600px;
+      width: 100%;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+      margin-right: auto;
+      font-weight: 600;
+      user-select: none;
+    }
+
+    #hintOutput .bulb {
+      font-size: 24px;
+      color: #bfa530;
+      user-select: none;
+    }
+
+    a {
+      color: #1a0dab;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .glow a {
+      animation: glow 1s infinite alternate;
+    }
+
+    @keyframes glow {
+      from { text-shadow: 0 0 10px #ffd700, 0 0 20px orange; }
+      to { text-shadow: 0 0 20px #ff9900, 0 0 30px gold; }
+    }
+
+    @media (max-width: 400px) {
+      .input-button-container {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+
+      button {
+        width: 100%;
+        justify-content: center;
+      }
+
+      h1 {
+        font-size: 2em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay">
+    <div class="title-box">
+      <h1>🗺️ Enter the Secret Word</h1>
+    </div>
+    <div class="input-button-container">
+      <input type="text" id="wordInput" placeholder="Type your word here..." />
+      <button onclick="checkWord()">Chalooooo</button>
+      <button onclick="showHint()">💡 Hint</button>
+    </div>
+    <div id="linkOutput"></div>
+    <div id="hintOutput" style="display:none;">
+      <span class="bulb">💡</span>
+      <span id="hintText"></span>
+    </div>
+  </div>
+
+  <audio id="successSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_8c9e5b6cc9.mp3?filename=correct-answer-2-89667.mp3" preload="auto"></audio>
+  <audio id="failSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c92f1a5e9a.mp3?filename=wrong-answer-2-89665.mp3" preload="auto"></audio>
+
+  <script>
+    const riddles = {
+      breakfast: {
+        riddle: "🧩 I am long and red with yellow in the centre you eat me with two mixtures what am I?",
+        answer: "masaladosa",
+        hint: "I am south Indian"
+      },
+      activity1: {
+        riddle: "🧩 Where flashing lights meet rolling balls, fun and games inside these halls what am I?",
+        answer: "arcade",
+        hint: "A place with glowing screens and smooth lanes, where players compete for points and gains."
+      },
+      activity2: {
+        riddle: "🧩 Dark and charming, a rebel with pain, immortal heart with love and disdain, brother and lover, fierce and sly— in Mystic Falls, who am I?",
+        answer: "damonsalvatore",
+        hint: "Vampire Diaries . Motuuuu is Jealous !!"
+      },
+      lunch: {
+        riddle: "🧩 Steaming strands in a savory sea, a comfort bowl that calls to me, with flavors deep and broth so grand, guess this dish from a distant land.",
+        answer: "ramen",
+        hint: "Nissin ahhhhhh"
+      },
+      activity3: {
+        riddle: "🧩 In a town of brewed coffee and quick wit, a mother-daughter bond in Stars Hollow lit—what show am I?",
+        answer: "gilmoregirls",
+        hint: "Sitcom hu mai"
+      }
+    };
+
+    const wordLinks = {
+      "rameshwaramcafe": "https://drive.google.com/file/d/1uvHUX9gScSAlxXaL-JTpHck6KkXGqVA-/view?usp=sharing",
+      "timezone": "https://drive.google.com/file/d/1Dita_iKl_ubyztZ2R5LaiFqQHzbde9Ih/view?usp=sharing",
+      "grid": "https://drive.google.com/file/d/1Dita_iKl_ubyztZ2R5LaiFqQHzbde9Ih/view?usp=sharing",
+      "madlabs": "https://drive.google.com/file/d/1PUyaWtFlMM3ZuCkA_QUTjrUDyqozsHIy/view?usp=sharing",
+      "minigolfmadness": "https://drive.google.com/file/d/1xJXIJMX1d23ybE9Pyn2hoQ9Rj_NyMBe1/view?usp=sharing",
+      "chinlungs": "https://rb.gy/jgdi39",
+      "truffles": "https://rb.gy/jgdi39",
+      "nasiandme": "https://rb.gy/jgdi39",
+      "aquariumparadise": "https://drive.google.com/file/d/1-gpOA1amVMtZwpRaHdA8pscBgggwJpia/view?usp=sharing",
+      "iloveyoumyrhino": "https://drive.google.com/file/d/1xIOFmmVQvdCCGbWNX1RqiwL3oxhVECkP/view?usp=sharing"
+    };
+
+    let currentRiddleKey = null;
+
+    function checkWord() {
+      const input = document.getElementById("wordInput").value.toLowerCase().trim();
+      const outputDiv = document.getElementById("linkOutput");
+      const hintDiv = document.getElementById("hintOutput");
+      const hintText = document.getElementById("hintText");
+      const successSound = document.getElementById("successSound");
+      const failSound = document.getElementById("failSound");
+
+      hintDiv.style.display = "none";
+      hintText.textContent = "";
+      currentRiddleKey = null;
+
+      if (riddles[input]) {
+        currentRiddleKey = input;
+        outputDiv.innerHTML = riddles[input].riddle;
+        return;
+      }
+
+      for (const key in riddles) {
+        if (input === riddles[key].answer) {
+          successSound.play();
+          if (key === "breakfast") {
+            outputDiv.innerHTML = `
+              <div class="glow">
+                ✅ Congratulations! 🎉 You won reward tokens!<br><br>
+                🔗 <a href="https://lnk.ink/TcDpw" target="_blank">Let's sail to the location !!!</a>
+              </div>
+            `;
+          } else {
+            outputDiv.innerHTML = `
+              <div class="glow">
+                ✅ Congratulations! 🎉 You won reward tokens!
+              </div>
+            `;
+          }
+          return;
+        }
+      }
+
+      if (wordLinks[input]) {
+        successSound.play();
+
+        if (input === "iloveyoumyrhino") {
+          outputDiv.innerHTML = `
+            <div class="glow">
+              🎉 Congratulations Captain Mittal! You have found the treasure location. Let's sail to it!<br><br>
+              🔗 <a href="${wordLinks[input]}" target="_blank">Sail to Treasure!</a>
+            </div>
+          `;
+        } else {
+          outputDiv.innerHTML = `
+            <div class="glow">
+              🏴‍☠️ Next location awaits! Set sail!<br><br>
+              🔗 <a href="${wordLinks[input]}" target="_blank">Let's sail to the location !!!</a>
+            </div>
+          `;
+        }
+        return;
+      }
+
+      failSound.play();
+      outputDiv.innerHTML = "❌ No treasure found for that word.";
+    }
+
+    function showHint() {
+      const hintDiv = document.getElementById("hintOutput");
+      const hintText = document.getElementById("hintText");
+      if (currentRiddleKey && riddles[currentRiddleKey].hint) {
+        hintText.textContent = riddles[currentRiddleKey].hint;
+        hintDiv.style.display = "flex";
+      } else {
+        hintText.textContent = "❓ No hint available. Try typing a riddle keyword like 'breakfast'.";
+        hintDiv.style.display = "flex";
+      }
+    }
+  </script>
+</body>
+</html>
